@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive Result - PostgreSQL Database Archiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .info-box {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .delete-section {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .delete-query {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .secondary-button {
+            background-color: #2196F3;
+        }
+        .secondary-button:hover {
+            background-color: #1976D2;
+        }
+        .copy-button {
+            background-color: #ff9800;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+        .copy-button:hover {
+            background-color: #f57c00;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Archive Operation Result</h1>
+        
+        {% if success %}
+        <div class="success">
+            <h2>✅ Archive Successful!</h2>
+            <p>{{ message }}</p>
+        </div>
+
+        <div class="info-box">
+            <strong>Archive Summary:</strong><br>
+            • Source Table: {{ source_table_name }}<br>
+            • Target Table: {{ target_table_name }}<br>
+            • Condition: {{ column_name }} {{ condition }}<br>
+            • Rows archived: {{ archived_count }}
+        </div>
+
+        <div class="delete-section">
+            <h3>⚠️ Cleanup Options</h3>
+            <p><strong>Important:</strong> The data has been successfully copied to the target database. 
+            You now need to delete the archived rows from the source database to complete the archiving process.</p>
+            
+            <p><strong>DELETE query to execute:</strong></p>
+            <div class="delete-query" id="deleteQuery">DELETE FROM {{ source_table_name }} WHERE {{ column_name }} {{ condition }};</div>
+            
+            <div style="margin: 20px 0;">
+                <form method="post" action="/execute_delete" style="display: inline;">
+                    <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+                    <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
+                    <input type="hidden" name="column_name" value="{{ column_name }}">
+                    <input type="hidden" name="condition" value="{{ condition }}">
+                    <input type="hidden" name="archived_count" value="{{ archived_count }}">
+                    <button type="submit" style="background-color: #dc3545; margin-right: 10px;" 
+                            onclick="return confirm('Are you sure you want to delete {{ archived_count }} rows from the source database? This action cannot be undone!')">
+                        🗑️ Execute DELETE Query Automatically
+                    </button>
+                </form>
+                
+                <button class="copy-button" onclick="copyToClipboard()">📋 Copy DELETE Query</button>
+            </div>
+            
+            <p style="font-size: 14px; color: #666; font-style: italic;">
+                <strong>Choose one option:</strong><br>
+                • <strong>Execute Automatically:</strong> Let the app run the DELETE query for you<br>
+                • <strong>Copy & Execute Manually:</strong> Copy the query and run it yourself in your database client
+            </p>
+            
+            <p><strong>⚠️ Warning:</strong> Please verify the archived data in the target database before deleting from source. 
+            Make sure you have a backup of your source database before proceeding.</p>
+        </div>
+
+        {% else %}
+        <div class="error">
+            <h2>❌ Archive Failed</h2>
+            <p>{{ message }}</p>
+        </div>
+        {% endif %}
+
+        <a href="/" class="back-link">← Start New Archive Operation</a>
+        <br>
+        <button onclick="window.location.href='/'" class="secondary-button">New Archive</button>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const deleteQuery = document.getElementById('deleteQuery').textContent;
+            navigator.clipboard.writeText(deleteQuery).then(function() {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.backgroundColor = '#4CAF50';
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#ff9800';
+                }, 2000);
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy. Please select and copy the query manually.');
+            });
+        }
+    </script>
+</body>
+</html>

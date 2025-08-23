@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Delete - PostgreSQL Database Archiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .danger-box {
+            background-color: #f8d7da;
+            border: 2px solid #dc3545;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .query-display {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .danger-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        .danger-button:hover {
+            background-color: #c82333;
+        }
+        .secondary-button {
+            background-color: #6c757d;
+            color: white;
+        }
+        .secondary-button:hover {
+            background-color: #5a6268;
+        }
+        .checkbox-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .checkbox-container label {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-link">← Back to Archive Result</a>
+        
+        <h1>⚠️ Confirm Delete Operation</h1>
+        
+        <div class="danger-box">
+            <h3>🚨 DESTRUCTIVE OPERATION WARNING</h3>
+            <p><strong>You are about to permanently delete {{ row_count }} rows from your source database.</strong></p>
+            <p>This action <strong>CANNOT BE UNDONE</strong>. Make sure you have verified that the data was correctly copied to the target database.</p>
+        </div>
+
+        <div class="info-box">
+            <strong>Operation Summary:</strong><br>
+            • Source Table: {{ source_table_name }}<br>
+            • Target Table: {{ target_table_name }}<br>
+            • Condition: {{ column_name }} {{ condition }}<br>
+            • Rows Archived: {{ archived_count }}<br>
+            • Current Rows Matching: {{ current_count }}
+            {% if current_count != archived_count %}
+            <br><span style="color: #dc3545; font-weight: bold;">⚠️ Warning: Count mismatch detected!</span>
+            {% endif %}
+        </div>
+
+        {% if current_count != archived_count %}
+        <div class="danger-box">
+            <h4>🚨 Count Mismatch Warning</h4>
+            <p><strong>The number of rows currently matching the condition ({{ current_count }}) does not match the number of archived rows ({{ archived_count }}).</strong></p>
+            <p>This could mean:</p>
+            <ul>
+                <li>Data was modified in the source table after archiving</li>
+                <li>Some rows were already deleted</li>
+                <li>New rows were added that match the condition</li>
+            </ul>
+            <p><strong>Recommendation:</strong> Review the situation before proceeding with deletion.</p>
+        </div>
+        {% endif %}
+
+        {% if preview_rows %}
+        <div class="warning-box">
+            <h4>📋 Preview of Rows to be Deleted (First 5)</h4>
+            <div style="max-height: 200px; overflow: auto; border: 1px solid #ddd; border-radius: 3px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            {% for column in columns %}
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in preview_rows %}
+                        <tr>
+                            {% for column in columns %}
+                            <td style="border: 1px solid #ddd; padding: 6px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row[column] }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="warning-box">
+            <h4>📋 Pre-execution Checklist</h4>
+            <p>Before proceeding, please ensure:</p>
+            <ul>
+                <li>✅ You have verified that all {{ row_count }} rows were successfully copied to the target database</li>
+                <li>✅ You have a recent backup of your source database</li>
+                <li>✅ You understand this operation is irreversible</li>
+                <li>✅ You have the necessary permissions to delete data from the source database</li>
+            </ul>
+        </div>
+
+        <h3>Query to Execute:</h3>
+        <div class="query-display">{{ delete_query }};</div>
+
+        <form method="post" action="/execute_delete_confirmed" id="deleteForm">
+            <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+            <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
+            <input type="hidden" name="column_name" value="{{ column_name }}">
+            <input type="hidden" name="condition" value="{{ condition }}">
+            <input type="hidden" name="archived_count" value="{{ archived_count }}">
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="confirmCheckbox" onchange="toggleDeleteButton()">
+                <label for="confirmCheckbox">
+                    I have verified the archived data and understand this deletion is permanent
+                </label>
+            </div>
+
+            {% if current_count == archived_count %}
+            <button type="submit" class="danger-button" id="deleteButton" disabled>
+                🗑️ CONFIRM DELETE - Remove {{ row_count }} Rows
+            </button>
+            {% else %}
+            <button type="button" class="danger-button" id="deleteButton" disabled title="Cannot delete due to count mismatch">
+                🚫 DELETE DISABLED - Count Mismatch ({{ current_count }} vs {{ archived_count }})
+            </button>
+            {% endif %}
+            
+            <button type="button" class="secondary-button" onclick="history.back()">
+                Cancel
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function toggleDeleteButton() {
+            const checkbox = document.getElementById('confirmCheckbox');
+            const deleteButton = document.getElementById('deleteButton');
+            const currentCount = parseInt('{{ current_count }}');
+            const archivedCount = parseInt('{{ archived_count }}');
+            
+            // Only enable if checkbox is checked AND counts match
+            deleteButton.disabled = !(checkbox.checked && currentCount === archivedCount);
+        }
+
+        // Add additional confirmation on form submission
+        const form = document.getElementById('deleteForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('FINAL CONFIRMATION: Are you absolutely sure you want to delete {{ current_count }} rows? This cannot be undone!')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

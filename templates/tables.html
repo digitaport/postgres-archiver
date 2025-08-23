@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Table - PostgreSQL Database Archiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .db-info {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .table-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .table-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .table-item:hover {
+            background-color: #e9e9e9;
+        }
+        .table-item.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Connection</a>
+        
+        <h1>Select Table to Archive</h1>
+        
+        <div class="db-info">
+            <strong>Source:</strong> {{ source_db_info }} → <strong>Target:</strong> {{ target_db_info }}
+        </div>
+
+        <h2>Available Tables</h2>
+        
+        {% if tables %}
+        <form method="post" action="/select_table" id="tableForm">
+            <div class="table-list">
+                {% for table in tables %}
+                <div class="table-item" onclick="selectTable('{{ table }}')">
+                    <input type="radio" name="table_name" value="{{ table }}" id="table_{{ loop.index }}" style="display: none;">
+                    <label for="table_{{ loop.index }}" style="cursor: pointer; display: block;">
+                        {{ table }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="submit" id="selectButton" disabled>Select Table</button>
+        </form>
+        {% else %}
+        <p>No tables found in the source database.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        function selectTable(tableName) {
+            // Remove previous selection
+            document.querySelectorAll('.table-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Select the clicked table
+            event.currentTarget.classList.add('selected');
+            document.querySelector(`input[value="${tableName}"]`).checked = true;
+            
+            // Enable the submit button
+            document.getElementById('selectButton').disabled = false;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schema Validation - PostgreSQL Database Archiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .table-info {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .validation-result {
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .validation-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .validation-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .validation-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .issue-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .issue-list li {
+            margin: 5px 0;
+        }
+        .schema-comparison {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .schema-column {
+            flex: 1;
+        }
+        .schema-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .schema-table th, .schema-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        .schema-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .schema-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .mismatch {
+            background-color: #ffebee !important;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .missing {
+            background-color: #fff3e0 !important;
+            color: #ef6c00;
+            font-style: italic;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .secondary-button {
+            background-color: #2196F3;
+        }
+        .secondary-button:hover {
+            background-color: #1976D2;
+        }
+        .danger-button {
+            background-color: #f44336;
+        }
+        .danger-button:hover {
+            background-color: #d32f2f;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-link">← Back to Target Table Selection</a>
+        
+        <h1>Schema Validation</h1>
+        
+        <div class="table-info">
+            <strong>Source Table:</strong> {{ source_table_name }} → <strong>Target Table:</strong> {{ target_table_name }}
+        </div>
+
+        {% if not validation.compatible %}
+        <div class="validation-result validation-error">
+            <h3>❌ Schema Incompatibility Detected</h3>
+            <p>The target table schema is not compatible with the source table. The following issues must be resolved:</p>
+            <ul class="issue-list">
+                {% for issue in validation.issues %}
+                <li>{{ issue }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="validation-result validation-success">
+            <h3>✅ Schema Compatible</h3>
+            <p>The target table schema is compatible with the source table.</p>
+        </div>
+        {% endif %}
+
+        {% if validation.warnings %}
+        <div class="validation-result validation-warning">
+            <h3>⚠️ Warnings</h3>
+            <ul class="issue-list">
+                {% for warning in validation.warnings %}
+                <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <h2>Schema Comparison</h2>
+        <div class="schema-comparison">
+            <div class="schema-column">
+                <h3>Source Table Schema</h3>
+                <table class="schema-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Max Len</th>
+                            <th>Nullable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for column in source_columns %}
+                        <tr>
+                            <td>{{ column.column_name }}</td>
+                            <td>{{ column.data_type }}</td>
+                            <td>{{ column.character_maximum_length or "-" }}</td>
+                            <td>{{ "Yes" if column.is_nullable == "YES" else "No" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="schema-column">
+                <h3>Target Table Schema</h3>
+                <table class="schema-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Max Len</th>
+                            <th>Nullable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set source_col_names = source_columns | map(attribute='column_name') | list %}
+                        {% for column in target_columns %}
+                        <tr {% if column.column_name not in source_col_names %}class="missing"{% endif %}>
+                            <td>{{ column.column_name }}</td>
+                            <td>{{ column.data_type }}</td>
+                            <td>{{ column.character_maximum_length or "-" }}</td>
+                            <td>{{ "Yes" if column.is_nullable == "YES" else "No" }}</td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% set target_col_names = target_columns | map(attribute='column_name') | list %}
+                        {% for column in source_columns %}
+                        {% if column.column_name not in target_col_names %}
+                        <tr class="mismatch">
+                            <td>{{ column.column_name }}</td>
+                            <td colspan="3">MISSING IN TARGET</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            {% if validation.compatible %}
+            <form method="post" action="/select_target_table" style="display: inline;">
+                <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+                <input type="hidden" name="target_table_option" value="existing">
+                <input type="hidden" name="existing_table_name" value="{{ target_table_name }}">
+                <button type="submit" onclick="return confirm('Proceed with this target table despite warnings?')">
+                    Continue with This Table
+                </button>
+            </form>
+            {% endif %}
+
+            <form method="post" action="/select_table" style="display: inline;">
+                <input type="hidden" name="table_name" value="{{ source_table_name }}">
+                <button type="submit" class="secondary-button">Choose Different Target Table</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

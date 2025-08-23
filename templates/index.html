@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL Database Archiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .db-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .db-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        .col {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PostgreSQL Database Archiver</h1>
+        <p>Connect to source and target PostgreSQL databases to archive data.</p>
+        
+        <form method="post" action="/connect">
+            <div class="db-section">
+                <h3>Source Database</h3>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="source_host">Host:</label>
+                            <input type="text" id="source_host" name="source_host" value="localhost" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="source_port">Port:</label>
+                            <input type="number" id="source_port" name="source_port" value="5432" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="source_database">Database Name:</label>
+                    <input type="text" id="source_database" name="source_database" required>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="source_username">Username:</label>
+                            <input type="text" id="source_username" name="source_username" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="source_password">Password:</label>
+                            <input type="password" id="source_password" name="source_password" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="db-section">
+                <h3>Target Database</h3>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="target_host">Host:</label>
+                            <input type="text" id="target_host" name="target_host" value="localhost" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="target_port">Port:</label>
+                            <input type="number" id="target_port" name="target_port" value="5432" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="target_database">Database Name:</label>
+                    <input type="text" id="target_database" name="target_database" required>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="target_username">Username:</label>
+                            <input type="text" id="target_username" name="target_username" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="target_password">Password:</label>
+                            <input type="password" id="target_password" name="target_password" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Connect and List Tables</button>
+        </form>
+    </div>
+</body>
+</html>

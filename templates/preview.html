@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Data - PostgreSQL Database Archiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .query-info {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .count-info {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        .preview-table th, .preview-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .preview-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        .preview-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .danger-button {
+            background-color: #f44336;
+        }
+        .danger-button:hover {
+            background-color: #d32f2f;
+        }
+        .secondary-button {
+            background-color: #2196F3;
+        }
+        .secondary-button:hover {
+            background-color: #1976D2;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .table-wrapper {
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .warning {
+            background-color: #ffebee;
+            border: 1px solid #f44336;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-link">← Back to Column Selection</a>
+        
+        <h1>Preview Data to Archive</h1>
+        
+        <div class="query-info">
+            <strong>Source Table:</strong> {{ source_table_name }}<br>
+            <strong>Target Table:</strong> {{ target_table_name }}<br>
+            <strong>Condition:</strong> {{ column_name }} {{ condition }}
+        </div>
+
+        <div class="count-info">
+            Total rows matching condition: {{ total_count }}
+        </div>
+
+        {% if total_count > 0 %}
+        <h2>Preview (First 10 rows)</h2>
+        <div class="table-wrapper">
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        {% for column in columns %}
+                        <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_data %}
+                    <tr>
+                        {% for column in columns %}
+                        <td title="{{ row[column] }}">{{ row[column] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="warning">
+            <strong>Warning:</strong> This action will copy {{ total_count }} rows to the target database. 
+            After archiving, you will need to manually delete these rows from the source database using the provided DELETE query.
+        </div>
+
+        <form method="post" action="/archive_data" style="display: inline;">
+            <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+            <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
+            <input type="hidden" name="column_name" value="{{ column_name }}">
+            <input type="hidden" name="condition" value="{{ condition }}">
+            <button type="submit" class="danger-button" onclick="return confirm('Are you sure you want to archive {{ total_count }} rows?')">
+                Archive {{ total_count }} Rows
+            </button>
+        </form>
+
+        <form method="post" action="/select_target_table" style="display: inline;">
+            <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+            <input type="hidden" name="target_table_option" value="existing">
+            <input type="hidden" name="existing_table_name" value="{{ target_table_name }}">
+            <button type="submit" class="secondary-button">Modify Condition</button>
+        </form>
+
+        {% else %}
+        <p>No rows found matching the specified condition.</p>
+        <form method="post" action="/select_target_table">
+            <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+            <input type="hidden" name="target_table_option" value="existing">
+            <input type="hidden" name="existing_table_name" value="{{ target_table_name }}">
+            <button type="submit" class="secondary-button">Modify Condition</button>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
