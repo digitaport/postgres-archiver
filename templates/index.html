@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,37 +8,52 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             text-align: center;
         }
+
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
             color: #555;
         }
-        input[type="text"], input[type="number"], input[type="password"] {
+
+        input[type="text"],
+        input[type="number"],
+        input[type="password"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             box-sizing: border-box;
         }
+
         .db-section {
             border: 1px solid #ddd;
             padding: 20px;
@@ -45,10 +61,12 @@
             border-radius: 5px;
             background-color: #f9f9f9;
         }
+
         .db-section h3 {
             margin-top: 0;
             color: #333;
         }
+
         button {
             background-color: #4CAF50;
             color: white;
@@ -57,26 +75,202 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            width: 100%;
         }
+
         button:hover {
             background-color: #45a049;
         }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background-color: #2196F3;
+            margin-right: 10px;
+        }
+
+        .btn-danger {
+            background-color: #f44336;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
         .row {
             display: flex;
             gap: 15px;
         }
+
         .col {
             flex: 1;
         }
+
+        /* Saved connections section */
+        .saved-connections {
+            margin-bottom: 30px;
+        }
+
+        .connection-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .connection-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.2s;
+        }
+
+        .connection-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .connection-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .connection-details {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .connection-details div {
+            margin: 3px 0;
+        }
+
+        .connection-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .connection-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .save-connection-option {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .save-connection-option label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .save-connection-option input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>PostgreSQL Database Archiver</h1>
         <p>Connect to source and target PostgreSQL databases to archive data.</p>
-        
-        <form method="post" action="/connect">
+
+        <!-- Saved Connections Section -->
+        <div class="saved-connections">
+            <h2>Saved Connections</h2>
+            <div id="connectionList" class="connection-list">
+                <div class="empty-state">Loading connections...</div>
+            </div>
+        </div>
+
+        <!-- Connection Form -->
+        <h2>New Connection</h2>
+        <form method="post" action="/connect" id="connectionForm">
+            <div class="save-connection-option">
+                <label>
+                    <input type="checkbox" id="saveConnection">
+                    <strong>Save this connection for future use</strong>
+                </label>
+                <div id="connectionNameGroup" style="display: none; margin-top: 10px;">
+                    <label for="connectionName">Connection Name:</label>
+                    <input type="text" id="connectionName" placeholder="e.g., Production to Archive">
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Security Notice:</strong> Saved connections store passwords in plain text locally. Only save
+                connections on trusted devices.
+            </div>
+
             <div class="db-section">
                 <h3>Source Database</h3>
                 <div class="row">
@@ -149,8 +343,321 @@
                 </div>
             </div>
 
-            <button type="submit">Connect and List Tables</button>
+            <button type="submit" class="btn-primary">Connect and List Tables</button>
         </form>
     </div>
+
+    <!-- Edit Connection Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Connection</h2>
+            <form id="editForm">
+                <input type="hidden" id="edit_connection_id">
+
+                <div class="form-group">
+                    <label for="edit_name">Connection Name:</label>
+                    <input type="text" id="edit_name" required>
+                </div>
+
+                <div class="db-section">
+                    <h3>Source Database</h3>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_source_host">Host:</label>
+                                <input type="text" id="edit_source_host" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_source_port">Port:</label>
+                                <input type="number" id="edit_source_port" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_source_database">Database Name:</label>
+                        <input type="text" id="edit_source_database" required>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_source_username">Username:</label>
+                                <input type="text" id="edit_source_username" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_source_password">Password:</label>
+                                <input type="password" id="edit_source_password">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="db-section">
+                    <h3>Target Database</h3>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_target_host">Host:</label>
+                                <input type="text" id="edit_target_host" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_target_port">Port:</label>
+                                <input type="number" id="edit_target_port" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_target_database">Database Name:</label>
+                        <input type="text" id="edit_target_database" required>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_target_username">Username:</label>
+                                <input type="text" id="edit_target_username" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="edit_target_password">Password:</label>
+                                <input type="password" id="edit_target_password">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Load saved connections on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadConnections();
+
+            // Show/hide connection name field
+            document.getElementById('saveConnection').addEventListener('change', function () {
+                document.getElementById('connectionNameGroup').style.display =
+                    this.checked ? 'block' : 'none';
+            });
+        });
+
+        // Load and display saved connections
+        async function loadConnections() {
+            try {
+                const response = await fetch('/api/connections');
+                const data = await response.json();
+                const connections = data.connections;
+
+                const listElement = document.getElementById('connectionList');
+
+                if (connections.length === 0) {
+                    listElement.innerHTML = '<div class="empty-state">No saved connections yet. Save your first connection below!</div>';
+                    return;
+                }
+
+                listElement.innerHTML = connections.map(conn => `
+                    <div class="connection-card">
+                        <div class="connection-name">${escapeHtml(conn.name)}</div>
+                        <div class="connection-details">
+                            <div><strong>Source:</strong> ${escapeHtml(conn.source.database)}@${escapeHtml(conn.source.host)}:${conn.source.port}</div>
+                            <div><strong>Target:</strong> ${escapeHtml(conn.target.database)}@${escapeHtml(conn.target.host)}:${conn.target.port}</div>
+                        </div>
+                        <div class="connection-actions">
+                            <button class="btn-secondary btn-small" onclick="useConnection('${conn.id}')">Use</button>
+                            <button class="btn-secondary btn-small" onclick="editConnection('${conn.id}')">Edit</button>
+                            <button class="btn-danger btn-small" onclick="deleteConnection('${conn.id}', '${escapeHtml(conn.name)}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading connections:', error);
+                document.getElementById('connectionList').innerHTML =
+                    '<div class="empty-state">Error loading connections</div>';
+            }
+        }
+
+        // Use a saved connection
+        async function useConnection(connectionId) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/connect_saved';
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'connection_id';
+            input.value = connectionId;
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // Edit a connection
+        async function editConnection(connectionId) {
+            try {
+                const response = await fetch(`/api/connections/${connectionId}`);
+                const conn = await response.json();
+
+                document.getElementById('edit_connection_id').value = conn.id;
+                document.getElementById('edit_name').value = conn.name;
+
+                document.getElementById('edit_source_host').value = conn.source.host;
+                document.getElementById('edit_source_port').value = conn.source.port;
+                document.getElementById('edit_source_database').value = conn.source.database;
+                document.getElementById('edit_source_username').value = conn.source.username;
+                document.getElementById('edit_source_password').value = conn.source.password || '';
+
+                document.getElementById('edit_target_host').value = conn.target.host;
+                document.getElementById('edit_target_port').value = conn.target.port;
+                document.getElementById('edit_target_database').value = conn.target.database;
+                document.getElementById('edit_target_username').value = conn.target.username;
+                document.getElementById('edit_target_password').value = conn.target.password || '';
+
+                document.getElementById('editModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading connection:', error);
+                alert('Error loading connection details');
+            }
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Handle edit form submission
+        document.getElementById('editForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const connectionId = document.getElementById('edit_connection_id').value;
+            const formData = new FormData();
+
+            formData.append('name', document.getElementById('edit_name').value);
+            formData.append('source_host', document.getElementById('edit_source_host').value);
+            formData.append('source_port', document.getElementById('edit_source_port').value);
+            formData.append('source_database', document.getElementById('edit_source_database').value);
+            formData.append('source_username', document.getElementById('edit_source_username').value);
+            formData.append('source_password', document.getElementById('edit_source_password').value);
+            formData.append('target_host', document.getElementById('edit_target_host').value);
+            formData.append('target_port', document.getElementById('edit_target_port').value);
+            formData.append('target_database', document.getElementById('edit_target_database').value);
+            formData.append('target_username', document.getElementById('edit_target_username').value);
+            formData.append('target_password', document.getElementById('edit_target_password').value);
+
+            try {
+                const response = await fetch(`/api/connections/${connectionId}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    closeEditModal();
+                    loadConnections();
+                    alert('Connection updated successfully!');
+                } else {
+                    alert('Error updating connection');
+                }
+            } catch (error) {
+                console.error('Error updating connection:', error);
+                alert('Error updating connection');
+            }
+        });
+
+        // Delete a connection
+        async function deleteConnection(connectionId, connectionName) {
+            if (!confirm(`Are you sure you want to delete the connection "${connectionName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/connections/${connectionId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadConnections();
+                    alert('Connection deleted successfully!');
+                } else {
+                    alert('Error deleting connection');
+                }
+            } catch (error) {
+                console.error('Error deleting connection:', error);
+                alert('Error deleting connection');
+            }
+        }
+
+        // Handle form submission to optionally save connection
+        document.getElementById('connectionForm').addEventListener('submit', async function (e) {
+            const saveConnection = document.getElementById('saveConnection').checked;
+
+            if (saveConnection) {
+                e.preventDefault();
+
+                const connectionName = document.getElementById('connectionName').value.trim();
+                if (!connectionName) {
+                    alert('Please enter a connection name');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('name', connectionName);
+                formData.append('source_host', document.getElementById('source_host').value);
+                formData.append('source_port', document.getElementById('source_port').value);
+                formData.append('source_database', document.getElementById('source_database').value);
+                formData.append('source_username', document.getElementById('source_username').value);
+                formData.append('source_password', document.getElementById('source_password').value);
+                formData.append('target_host', document.getElementById('target_host').value);
+                formData.append('target_port', document.getElementById('target_port').value);
+                formData.append('target_database', document.getElementById('target_database').value);
+                formData.append('target_username', document.getElementById('target_username').value);
+                formData.append('target_password', document.getElementById('target_password').value);
+
+                try {
+                    // Save the connection first
+                    const saveResponse = await fetch('/api/connections', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!saveResponse.ok) {
+                        alert('Error saving connection');
+                        return;
+                    }
+
+                    const savedConn = await saveResponse.json();
+
+                    // Then use it to connect
+                    useConnection(savedConn.id);
+                } catch (error) {
+                    console.error('Error saving connection:', error);
+                    alert('Error saving connection');
+                }
+            }
+        });
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        }
+    </script>
 </body>
+
 </html>

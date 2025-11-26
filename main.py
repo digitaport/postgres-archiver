@@ -10,6 +10,7 @@ import json
 import decimal
 import datetime
 import uuid
+import connections
 
 app = FastAPI(title="PostgreSQL Database Archiver")
 templates = Jinja2Templates(directory="templates")
@@ -292,6 +293,148 @@ target_db = None
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+# API endpoints for connection management
+@app.get("/api/connections")
+async def get_connections():
+    """Get all saved connections (without passwords)"""
+    return {"connections": connections.get_connections_without_passwords()}
+
+@app.get("/api/connections/{connection_id}")
+async def get_connection(connection_id: str):
+    """Get a specific connection with full details including password"""
+    conn = connections.get_connection(connection_id)
+    if not conn:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    return conn
+
+@app.post("/api/connections")
+async def create_connection(
+    name: str = Form(...),
+    source_host: str = Form(...),
+    source_port: int = Form(...),
+    source_database: str = Form(...),
+    source_username: str = Form(...),
+    source_password: str = Form(default=""),
+    target_host: str = Form(...),
+    target_port: int = Form(...),
+    target_database: str = Form(...),
+    target_username: str = Form(...),
+    target_password: str = Form(default="")
+):
+    """Create a new saved connection"""
+    source = {
+        "host": source_host,
+        "port": source_port,
+        "database": source_database,
+        "username": source_username,
+        "password": source_password
+    }
+    
+    target = {
+        "host": target_host,
+        "port": target_port,
+        "database": target_database,
+        "username": target_username,
+        "password": target_password
+    }
+    
+    new_conn = connections.add_connection(name, source, target)
+    return new_conn
+
+@app.put("/api/connections/{connection_id}")
+async def update_connection(
+    connection_id: str,
+    name: str = Form(...),
+    source_host: str = Form(...),
+    source_port: int = Form(...),
+    source_database: str = Form(...),
+    source_username: str = Form(...),
+    source_password: str = Form(default=""),
+    target_host: str = Form(...),
+    target_port: int = Form(...),
+    target_database: str = Form(...),
+    target_username: str = Form(...),
+    target_password: str = Form(default="")
+):
+    """Update an existing connection"""
+    source = {
+        "host": source_host,
+        "port": source_port,
+        "database": source_database,
+        "username": source_username,
+        "password": source_password
+    }
+    
+    target = {
+        "host": target_host,
+        "port": target_port,
+        "database": target_database,
+        "username": target_username,
+        "password": target_password
+    }
+    
+    updated_conn = connections.update_connection(connection_id, name, source, target)
+    if not updated_conn:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    return updated_conn
+
+@app.delete("/api/connections/{connection_id}")
+async def delete_connection(connection_id: str):
+    """Delete a saved connection"""
+    success = connections.delete_connection(connection_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    return {"success": True, "message": "Connection deleted"}
+
+@app.post("/connect_saved")
+async def connect_saved(
+    request: Request,
+    connection_id: str = Form(...)
+):
+    """Connect using a saved connection"""
+    global source_db, target_db
+    
+    conn = connections.get_connection(connection_id)
+    if not conn:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    
+    source = conn.get("source", {})
+    target = conn.get("target", {})
+    
+    # Test source database connection
+    source_db = DatabaseConnection(
+        source.get("host"),
+        source.get("port"),
+        source.get("database"),
+        source.get("username"),
+        source.get("password", "")
+    )
+    if not source_db.connect():
+        raise HTTPException(status_code=400, detail="Failed to connect to source database")
+    
+    # Test target database connection
+    target_db = DatabaseConnection(
+        target.get("host"),
+        target.get("port"),
+        target.get("database"),
+        target.get("username"),
+        target.get("password", "")
+    )
+    if not target_db.connect():
+        source_db.disconnect()
+        raise HTTPException(status_code=400, detail="Failed to connect to target database")
+    
+    # Get tables from source database
+    tables = source_db.get_tables()
+    
+    return templates.TemplateResponse("tables.html", {
+        "request": request,
+        "tables": tables,
+        "source_db_info": f"{source.get('database')}@{source.get('host')}",
+        "target_db_info": f"{target.get('database')}@{target.get('host')}"
+    })
+
 
 @app.post("/connect")
 async def connect_databases(
