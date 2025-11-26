@@ -300,12 +300,12 @@ async def connect_databases(
     source_port: int = Form(...),
     source_database: str = Form(...),
     source_username: str = Form(...),
-    source_password: str = Form(...),
+    source_password: str = Form(default=""),
     target_host: str = Form(...),
     target_port: int = Form(...),
     target_database: str = Form(...),
     target_username: str = Form(...),
-    target_password: str = Form(...)
+    target_password: str = Form(default="")
 ):
     global source_db, target_db
     
