@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,16 +13,19 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             text-align: center;
         }
+
         .warning-box {
             background-color: #fff3cd;
             border: 2px solid #ffc107;
@@ -29,6 +33,7 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .danger-box {
             background-color: #f8d7da;
             border: 2px solid #dc3545;
@@ -36,6 +41,7 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .info-box {
             background-color: #d1ecf1;
             border: 1px solid #bee5eb;
@@ -43,6 +49,7 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .query-display {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -52,6 +59,7 @@
             margin: 15px 0;
             word-break: break-all;
         }
+
         button {
             padding: 12px 20px;
             border: none;
@@ -61,62 +69,73 @@
             margin-right: 10px;
             margin-bottom: 10px;
         }
+
         .danger-button {
             background-color: #dc3545;
             color: white;
         }
+
         .danger-button:hover {
             background-color: #c82333;
         }
+
         .secondary-button {
             background-color: #6c757d;
             color: white;
         }
+
         .secondary-button:hover {
             background-color: #5a6268;
         }
+
         .checkbox-container {
             margin: 20px 0;
             padding: 15px;
             background-color: #f8f9fa;
             border-radius: 5px;
         }
+
         .checkbox-container input[type="checkbox"] {
             margin-right: 10px;
             transform: scale(1.2);
         }
+
         .checkbox-container label {
             cursor: pointer;
             font-weight: bold;
         }
+
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
             color: #4CAF50;
             text-decoration: none;
         }
+
         .back-link:hover {
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <a href="javascript:history.back()" class="back-link">← Back to Archive Result</a>
-        
+
         <h1>⚠️ Confirm Delete Operation</h1>
-        
+
         <div class="danger-box">
             <h3>🚨 DESTRUCTIVE OPERATION WARNING</h3>
             <p><strong>You are about to permanently delete {{ row_count }} rows from your source database.</strong></p>
-            <p>This action <strong>CANNOT BE UNDONE</strong>. Make sure you have verified that the data was correctly copied to the target database.</p>
+            <p>This action <strong>CANNOT BE UNDONE</strong>. Make sure you have verified that the data was correctly
+                copied to the target database.</p>
         </div>
 
         <div class="info-box">
             <strong>Operation Summary:</strong><br>
             • Source Table: {{ source_table_name }}<br>
             • Target Table: {{ target_table_name }}<br>
-            • Condition: {{ column_name }} {{ condition }}<br>
+            • Condition: {{ where_clause }}<br>
             • Rows Archived: {{ archived_count }}<br>
             • Current Rows Matching: {{ current_count }}
             {% if current_count != archived_count %}
@@ -127,7 +146,8 @@
         {% if current_count != archived_count %}
         <div class="danger-box">
             <h4>🚨 Count Mismatch Warning</h4>
-            <p><strong>The number of rows currently matching the condition ({{ current_count }}) does not match the number of archived rows ({{ archived_count }}).</strong></p>
+            <p><strong>The number of rows currently matching the condition ({{ current_count }}) does not match the
+                    number of archived rows ({{ archived_count }}).</strong></p>
             <p>This could mean:</p>
             <ul>
                 <li>Data was modified in the source table after archiving</li>
@@ -154,7 +174,9 @@
                         {% for row in preview_rows %}
                         <tr>
                             {% for column in columns %}
-                            <td style="border: 1px solid #ddd; padding: 6px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row[column] }}</td>
+                            <td
+                                style="border: 1px solid #ddd; padding: 6px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ row[column] }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
@@ -168,7 +190,8 @@
             <h4>📋 Pre-execution Checklist</h4>
             <p>Before proceeding, please ensure:</p>
             <ul>
-                <li>✅ You have verified that all {{ row_count }} rows were successfully copied to the target database</li>
+                <li>✅ You have verified that all {{ row_count }} rows were successfully copied to the target database
+                </li>
                 <li>✅ You have a recent backup of your source database</li>
                 <li>✅ You understand this operation is irreversible</li>
                 <li>✅ You have the necessary permissions to delete data from the source database</li>
@@ -181,10 +204,14 @@
         <form method="post" action="/execute_delete_confirmed" id="deleteForm">
             <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
             <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
-            <input type="hidden" name="column_name" value="{{ column_name }}">
-            <input type="hidden" name="condition" value="{{ condition }}">
+            {% for col in column_names %}
+            <input type="hidden" name="column_name" value="{{ col }}">
+            {% endfor %}
+            {% for cond in conditions %}
+            <input type="hidden" name="condition" value="{{ cond }}">
+            {% endfor %}
             <input type="hidden" name="archived_count" value="{{ archived_count }}">
-            
+
             <div class="checkbox-container">
                 <input type="checkbox" id="confirmCheckbox" onchange="toggleDeleteButton()">
                 <label for="confirmCheckbox">
@@ -197,11 +224,12 @@
                 🗑️ CONFIRM DELETE - Remove {{ row_count }} Rows
             </button>
             {% else %}
-            <button type="button" class="danger-button" id="deleteButton" disabled title="Cannot delete due to count mismatch">
+            <button type="button" class="danger-button" id="deleteButton" disabled
+                title="Cannot delete due to count mismatch">
                 🚫 DELETE DISABLED - Count Mismatch ({{ current_count }} vs {{ archived_count }})
             </button>
             {% endif %}
-            
+
             <button type="button" class="secondary-button" onclick="history.back()">
                 Cancel
             </button>
@@ -214,7 +242,7 @@
             const deleteButton = document.getElementById('deleteButton');
             const currentCount = parseInt('{{ current_count }}');
             const archivedCount = parseInt('{{ archived_count }}');
-            
+
             // Only enable if checkbox is checked AND counts match
             deleteButton.disabled = !(checkbox.checked && currentCount === archivedCount);
         }
@@ -222,7 +250,7 @@
         // Add additional confirmation on form submission
         const form = document.getElementById('deleteForm');
         if (form) {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 if (!confirm('FINAL CONFIRMATION: Are you absolutely sure you want to delete {{ current_count }} rows? This cannot be undone!')) {
                     e.preventDefault();
                     return false;
@@ -231,4 +259,5 @@
         }
     </script>
 </body>
+
 </html>

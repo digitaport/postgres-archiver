@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,21 +13,26 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        h1, h2 {
+
+        h1,
+        h2 {
             color: #333;
         }
+
         .query-info {
             background-color: #e8f4f8;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .count-info {
             background-color: #fff3cd;
             padding: 15px;
@@ -35,13 +41,16 @@
             text-align: center;
             font-weight: bold;
         }
+
         .preview-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
             font-size: 12px;
         }
-        .preview-table th, .preview-table td {
+
+        .preview-table th,
+        .preview-table td {
             border: 1px solid #ddd;
             padding: 6px;
             text-align: left;
@@ -50,15 +59,18 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .preview-table th {
             background-color: #f2f2f2;
             font-weight: bold;
             position: sticky;
             top: 0;
         }
+
         .preview-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         button {
             background-color: #4CAF50;
             color: white;
@@ -70,36 +82,45 @@
             margin-right: 10px;
             margin-bottom: 10px;
         }
+
         button:hover {
             background-color: #45a049;
         }
+
         .danger-button {
             background-color: #f44336;
         }
+
         .danger-button:hover {
             background-color: #d32f2f;
         }
+
         .secondary-button {
             background-color: #2196F3;
         }
+
         .secondary-button:hover {
             background-color: #1976D2;
         }
+
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
             color: #4CAF50;
             text-decoration: none;
         }
+
         .back-link:hover {
             text-decoration: underline;
         }
+
         .table-wrapper {
             max-height: 400px;
             overflow: auto;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+
         .warning {
             background-color: #ffebee;
             border: 1px solid #f44336;
@@ -108,23 +129,105 @@
             margin: 20px 0;
             color: #d32f2f;
         }
+
+        .index-info {
+            background-color: #e8f4f8;
+            border: 1px solid #90caf9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .index-sql {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            word-break: break-word;
+            margin-top: 8px;
+        }
+
+        .info-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 12px 0;
+        }
+
+        .info-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 12px 0;
+        }
+
+        .index-action {
+            margin-top: 10px;
+        }
+
+        .index-action button {
+            background-color: #1976D2;
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        .index-action button:hover {
+            background-color: #1565C0;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <a href="javascript:history.back()" class="back-link">← Back to Column Selection</a>
-        
+
         <h1>Preview Data to Archive</h1>
-        
+
         <div class="query-info">
             <strong>Source Table:</strong> {{ source_table_name }}<br>
             <strong>Target Table:</strong> {{ target_table_name }}<br>
-            <strong>Condition:</strong> {{ column_name }} {{ condition }}
+            <strong>Condition:</strong> {{ where_clause }}
         </div>
 
         <div class="count-info">
             Total rows matching condition: {{ total_count }}
         </div>
+
+        {% if index_create_message %}
+        <div class="info-success">{{ index_create_message }}</div>
+        {% endif %}
+
+        {% if index_create_error %}
+        <div class="info-error">{{ index_create_error }}</div>
+        {% endif %}
+
+        {% if index_recommendation %}
+        <div class="index-info">
+            <strong>Source Index Analysis (EXPLAIN):</strong><br>
+            {{ index_recommendation.reason }}
+
+            {% if index_recommendation.recommended %}
+            <div class="index-sql">{{ index_recommendation.index_sql }}</div>
+            <small>Run this on the source database before migration for better read performance.</small>
+            <form method="post" action="/create_recommended_index" class="index-action">
+                <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
+                <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
+                {% for col in column_names %}
+                <input type="hidden" name="column_name" value="{{ col }}">
+                {% endfor %}
+                {% for cond in conditions %}
+                <input type="hidden" name="condition" value="{{ cond }}">
+                {% endfor %}
+                <button type="submit">Create Recommended Index Now</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
 
         {% if total_count > 0 %}
         <h2>Preview (First 10 rows)</h2>
@@ -150,16 +253,22 @@
         </div>
 
         <div class="warning">
-            <strong>Warning:</strong> This action will copy {{ total_count }} rows to the target database. 
-            After archiving, you will need to manually delete these rows from the source database using the provided DELETE query.
+            <strong>Warning:</strong> This action will copy {{ total_count }} rows to the target database.
+            After archiving, you will need to manually delete these rows from the source database using the provided
+            DELETE query.
         </div>
 
         <form method="post" action="/archive_data" style="display: inline;">
             <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
             <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
-            <input type="hidden" name="column_name" value="{{ column_name }}">
-            <input type="hidden" name="condition" value="{{ condition }}">
-            <button type="submit" class="danger-button" onclick="return confirm('Are you sure you want to archive {{ total_count }} rows?')">
+            {% for col in column_names %}
+            <input type="hidden" name="column_name" value="{{ col }}">
+            {% endfor %}
+            {% for cond in conditions %}
+            <input type="hidden" name="condition" value="{{ cond }}">
+            {% endfor %}
+            <button type="submit" class="danger-button"
+                onclick="return confirm('Are you sure you want to archive {{ total_count }} rows?')">
                 Archive {{ total_count }} Rows
             </button>
         </form>
@@ -182,4 +291,5 @@
         {% endif %}
     </div>
 </body>
+
 </html>

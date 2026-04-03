@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,15 +13,19 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        h1, h2 {
+
+        h1,
+        h2 {
             color: #333;
         }
+
         .table-info {
             background-color: #e8f4f8;
             padding: 15px;
@@ -28,16 +33,20 @@
             margin-bottom: 20px;
             text-align: center;
         }
+
         .form-group {
             margin-bottom: 20px;
         }
+
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
             color: #555;
         }
-        select, input[type="text"] {
+
+        select,
+        input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -45,23 +54,29 @@
             box-sizing: border-box;
             font-size: 14px;
         }
+
         .columns-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        .columns-table th, .columns-table td {
+
+        .columns-table th,
+        .columns-table td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
+
         .columns-table th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
+
         .columns-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         button {
             background-color: #4CAF50;
             color: white;
@@ -72,38 +87,92 @@
             font-size: 16px;
             margin-right: 10px;
         }
+
         button:hover {
             background-color: #45a049;
         }
+
         .secondary-button {
             background-color: #2196F3;
         }
+
         .secondary-button:hover {
             background-color: #1976D2;
         }
+
+        .danger-button {
+            background-color: #f44336;
+        }
+
+        .danger-button:hover {
+            background-color: #da190b;
+        }
+
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
             color: #4CAF50;
             text-decoration: none;
         }
+
         .back-link:hover {
             text-decoration: underline;
         }
+
         .condition-help {
             font-size: 12px;
             color: #666;
             margin-top: 5px;
             font-style: italic;
         }
+
+        .condition-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+
+        .condition-row .column-select {
+            flex: 1;
+        }
+
+        .condition-row .condition-input {
+            flex: 1;
+        }
+
+        .condition-row .remove-btn {
+            padding: 10px 15px;
+            margin-top: 0;
+        }
+
+        .add-condition-btn {
+            background-color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .conditions-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+        }
+
+        .conditions-header {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <a href="javascript:history.back()" class="back-link">← Back to Tables</a>
-        
+
         <h1>Configure Archiving Condition</h1>
-        
+
         <div class="table-info">
             <strong>Source Table:</strong> {{ source_table_name }}<br>
             <strong>Target Table:</strong> {{ target_table_name }}
@@ -132,30 +201,88 @@
             </tbody>
         </table>
 
-        <form method="post" action="/preview_data">
+        <form method="post" action="/preview_data" id="conditionsForm">
             <input type="hidden" name="source_table_name" value="{{ source_table_name }}">
             <input type="hidden" name="target_table_name" value="{{ target_table_name }}">
-            
-            <div class="form-group">
-                <label for="column_name">Select Column for Condition:</label>
-                <select name="column_name" id="column_name" required>
-                    <option value="">-- Select a column --</option>
-                    {% for column in columns %}
-                    <option value="{{ column.column_name }}">{{ column.column_name }} ({{ column.data_type }})</option>
-                    {% endfor %}
-                </select>
-            </div>
 
-            <div class="form-group">
-                <label for="condition">Condition:</label>
-                <input type="text" name="condition" id="condition" placeholder="e.g., < '2023-01-01' or = 'archived'" required>
+            <div class="conditions-container">
+                <div class="conditions-header">Conditions (combined with AND)</div>
+                <div id="conditionsWrapper">
+                    <!-- Initial condition row -->
+                    <div class="condition-row">
+                        <div class="column-select">
+                            <select name="column_name" required>
+                                <option value="">-- Select a column --</option>
+                                {% for column in columns %}
+                                <option value="{{ column.column_name }}">{{ column.column_name }} ({{ column.data_type
+                                    }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="condition-input">
+                            <input type="text" name="condition" placeholder="e.g., = true  or  < '2023-01-01'" required>
+                        </div>
+                        <button type="button" class="danger-button remove-btn" onclick="removeCondition(this)"
+                            style="display: none;">Remove</button>
+                    </div>
+                </div>
                 <div class="condition-help">
-                    Examples: &lt; '2023-01-01', = 'archived', IN ('status1', 'status2'), IS NULL, &gt; 100
+                    <strong>Important:</strong> Include the operator and value with proper spacing.<br>
+                    Examples: <code>= true</code>, <code>&lt; '2023-01-01'</code>, <code>= 'archived'</code>,
+                    <code>IN ('status1', 'status2')</code>, <code>IS NULL</code>, <code>&gt; 100</code>
                 </div>
             </div>
 
+            <button type="button" class="add-condition-btn" onclick="addCondition()">+ Add Condition</button>
+            <br>
             <button type="submit" class="secondary-button">Preview Matching Data</button>
         </form>
     </div>
+
+    <script>
+        function addCondition() {
+            const wrapper = document.getElementById('conditionsWrapper');
+            const newRow = document.createElement('div');
+            newRow.className = 'condition-row';
+            newRow.innerHTML = `
+                <div class="column-select">
+                    <select name="column_name" required>
+                        <option value="">-- Select a column --</option>
+                        {% for column in columns %}
+                        <option value="{{ column.column_name }}">{{ column.column_name }} ({{ column.data_type }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="condition-input">
+                    <input type="text" name="condition" placeholder="e.g., = true  or  < '2023-01-01'" required>
+                </div>
+                <button type="button" class="danger-button remove-btn" onclick="removeCondition(this)">Remove</button>
+            `;
+            wrapper.appendChild(newRow);
+            updateRemoveButtons();
+        }
+
+        function removeCondition(button) {
+            const row = button.closest('.condition-row');
+            row.remove();
+            updateRemoveButtons();
+        }
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.condition-row');
+            rows.forEach((row, index) => {
+                const removeBtn = row.querySelector('.remove-btn');
+                if (rows.length === 1) {
+                    removeBtn.style.display = 'none';
+                } else {
+                    removeBtn.style.display = 'block';
+                }
+            });
+        }
+
+        // Initialize on page load
+        updateRemoveButtons();
+    </script>
 </body>
+
 </html>

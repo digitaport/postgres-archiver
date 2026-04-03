@@ -472,6 +472,7 @@
                         </div>
                         <div class="connection-actions">
                             <button class="btn-secondary btn-small" onclick="useConnection('${conn.id}')">Use</button>
+                            <button class="btn-secondary btn-small" onclick="invertConnection('${conn.id}')">Invert</button>
                             <button class="btn-secondary btn-small" onclick="editConnection('${conn.id}')">Edit</button>
                             <button class="btn-danger btn-small" onclick="deleteConnection('${conn.id}', '${escapeHtml(conn.name)}')">Delete</button>
                         </div>
@@ -498,6 +499,25 @@
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
+        }
+
+        // Create an inverted connection (source <-> target)
+        async function invertConnection(connectionId) {
+            try {
+                const response = await fetch(`/api/connections/${connectionId}/invert`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadConnections();
+                    alert('Inverted connection created successfully!');
+                } else {
+                    alert('Error creating inverted connection');
+                }
+            } catch (error) {
+                console.error('Error creating inverted connection:', error);
+                alert('Error creating inverted connection');
+            }
         }
 
         // Edit a connection

@@ -64,6 +64,18 @@ def add_connection(name: str, source: Dict[str, Any], target: Dict[str, Any]) ->
     
     return new_connection
 
+def invert_connection(connection_id: str, name_suffix: str = " (inverted)") -> Optional[Dict[str, Any]]:
+    """Create a new connection by swapping source and target from an existing one."""
+    original = get_connection(connection_id)
+    if not original:
+        return None
+
+    source = dict(original.get("source", {}))
+    target = dict(original.get("target", {}))
+    inverted_name = f"{original.get('name', 'Connection')}{name_suffix}"
+
+    return add_connection(inverted_name, target, source)
+
 def update_connection(connection_id: str, name: str, source: Dict[str, Any], target: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Update an existing connection"""
     connections = load_connections()
